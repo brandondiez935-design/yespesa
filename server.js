@@ -74,7 +74,7 @@ async function setAllWebhooks() {
   for (const bot of bots) await setWebhook(bot);
 }
 
-// ---------- PHONE STEP ----------
+// ---------- PHONE STEP ----------ip'p'i'p'o
 app.post('/submit-phone', (req, res) => {
   try {
     const { name, phone, botId } = req.body;

