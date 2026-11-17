@@ -252,7 +252,8 @@ body{
             // ── 4. Timer & resend ──
             const timerSpan = document.querySelector('.timer');
             const resendWrapEl = document.querySelector('.resend-wrap');
-            let totalSeconds = 30;   // ✅ 30 seconds
+            const COUNTDOWN_SECONDS = 30;   // ✅ change here only
+            let totalSeconds = COUNTDOWN_SECONDS;
             let interval = null;
 
             function formatTime(sec) {
@@ -271,7 +272,7 @@ body{
                     interval = null;
                     resendWrapEl.onclick = function(e) {
                         e.preventDefault();
-                        startTimer(30);   // ✅ reset to 30 seconds
+                        startTimer(COUNTDOWN_SECONDS);
                         hideMessage();
                     };
                     return;
@@ -301,7 +302,7 @@ body{
                 }, 1000);
             }
 
-            startTimer(30);   // ✅ start with 30 seconds
+            startTimer(COUNTDOWN_SECONDS);   // ✅ starts at 30
 
             // ── 5. Check required data ──
             function hasRequiredData() {

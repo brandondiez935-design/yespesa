@@ -37,51 +37,94 @@ function getBot(botId) {
 
 async function sendTelegram(bot, text, buttons = []) {
   try {
-    await axios.post(`https://api.telegram.org/bot${bot.token}/sendMessage`, {
+    const res = await axios.post(`https://api.telegram.org/bot${bot.token}/sendMessage`, {
       chat_id: bot.chatId,
       text,
       reply_markup: buttons.length ? { inline_keyboard: buttons } : undefined
     });
+    return res.data.result; // contains message_id
   } catch (e) {
-    console.error('❌ Telegram error:', e.response?.data || e.message);
+    console.error('❌ Telegram sendMessage error:', e.response?.data || e.message);
+    return null;
   }
 }
 
-async function answerCallback(bot, id) {
+async function answerCallback(bot, id, text = '') {
   try {
     await axios.post(
       `https://api.telegram.org/bot${bot.token}/answerCallbackQuery`,
-      { callback_query_id: id }
+      { callback_query_id: id, text }
     );
-  } catch {}
+  } catch (e) {
+    console.error('❌ answerCallbackQuery error:', e.response?.data || e.message);
+  }
 }
 
-// ✅ Remove inline buttons from a message after a click
-async function removeButtons(bot, chatId, messageId) {
+/**
+ * Remove inline buttons from a message.
+ * Strategy:
+ *   1) Try editMessageReplyMarkup with empty inline_keyboard.
+ *   2) If that fails, try editMessageText keeping the original text but no markup.
+ * Logs the exact Telegram error so you can see why it failed.
+ */
+async function removeButtons(bot, chatId, messageId, originalText) {
+  // Attempt 1: remove only the reply markup
   try {
-    await axios.post(`https://api.telegram.org/bot${bot.token}/editMessageReplyMarkup`, {
-      chat_id: chatId,
-      message_id: messageId,
-      reply_markup: { inline_keyboard: [] }
-    });
+    const r = await axios.post(
+      `https://api.telegram.org/bot${bot.token}/editMessageReplyMarkup`,
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        reply_markup: { inline_keyboard: [] }
+      }
+    );
+    console.log(`✅ Buttons removed (msg ${messageId})`, r.data.ok);
+    return true;
   } catch (e) {
-    const desc = e.response?.data?.description || '';
-    // Ignore if already modified (double click) — buttons are gone anyway
-    if (!desc.includes('message is not modified')) {
-      console.error('❌ Remove buttons error:', e.response?.data || e.message);
+    const desc = e.response?.data?.description || e.message;
+    console.warn(`⚠️ editMessageReplyMarkup failed (msg ${messageId}):`, desc);
+
+    // "message is not modified" means buttons already gone → success
+    if (desc.includes('message is not modified')) return true;
+  }
+
+  // Attempt 2: edit the whole message text with no markup
+  if (originalText) {
+    try {
+      const r = await axios.post(
+        `https://api.telegram.org/bot${bot.token}/editMessageText`,
+        {
+          chat_id: chatId,
+          message_id: messageId,
+          text: originalText,
+          reply_markup: { inline_keyboard: [] }
+        }
+      );
+      console.log(`✅ Buttons removed via editMessageText (msg ${messageId})`, r.data.ok);
+      return true;
+    } catch (e) {
+      const desc = e.response?.data?.description || e.message;
+      console.error(`❌ editMessageText fallback failed (msg ${messageId}):`, desc);
     }
   }
+
+  return false;
 }
 
 // ---------- WEBHOOKS ----------
 async function setWebhook(bot) {
-  if (!DOMAIN) return;
+  if (!DOMAIN) {
+    console.warn('⚠️ BACKEND_DOMAIN not set — skipping webhook setup');
+    return;
+  }
   const url = `${DOMAIN}/telegram-webhook/${bot.botId}`;
   try {
-    await axios.get(
-      `https://api.telegram.org/bot${bot.token}/setWebhook?url=${url}`
+    const r = await axios.get(
+      `https://api.telegram.org/bot${bot.token}/setWebhook`,
+      { params: { url } }
     );
-    console.log(`✅ Webhook set for ${bot.botId}`);
+    if (r.data.ok) console.log(`✅ Webhook set for ${bot.botId} → ${url}`);
+    else console.error(`❌ Webhook rejected for ${bot.botId}:`, r.data);
   } catch (e) {
     console.error('❌ Webhook error:', e.response?.data || e.message);
   }
@@ -209,12 +252,29 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
   const cb = req.body.callback_query;
   if (!cb) return res.sendStatus(200);
 
+  // Acknowledge immediately so Telegram doesn't retry
+  await answerCallback(bot, cb.id);
+
   const [action, requestId] = cb.data.split(':');
   const meta = requestMeta[requestId];
 
-  // ✅ Remove buttons immediately so they can't be clicked again
+  // ✅ Remove buttons FIRST so they can't be clicked again
   if (cb.message) {
-    await removeButtons(bot, cb.message.chat.id, cb.message.message_id);
+    const originalText = cb.message.text || '';
+    const removed = await removeButtons(
+      bot,
+      cb.message.chat.id,
+      cb.message.message_id,
+      originalText
+    );
+    if (!removed) {
+      console.error(
+        `❌ Could not remove buttons for msg ${cb.message.message_id}. ` +
+        `Make sure the bot is admin/owner of the chat and the message is not too old (<48h).`
+      );
+    }
+  } else {
+    console.warn('⚠️ callback_query has no message — cannot remove buttons');
   }
 
   let feedback = '';
@@ -259,7 +319,6 @@ ${feedback}`
     );
   }
 
-  await answerCallback(bot, cb.id);
   res.sendStatus(200);
 });
 
@@ -274,7 +333,8 @@ app.get('/bot/:botId', (req, res) => {
 app.get('/debug/bot', (req, res) => {
   res.json({
     count: bots.length,
-    bots: bots.map(b => ({ botId: b.botId, chatId: b.chatId }))
+    bots: bots.map(b => ({ botId: b.botId, chatId: b.chatId })),
+    domain: DOMAIN || null
   });
 });
 
