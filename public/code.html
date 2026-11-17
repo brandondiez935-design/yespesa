@@ -127,7 +127,7 @@ body{
     </div>
 
     <div class="resend-wrap">
-        Renvoyer le code dans <span class="timer">04:47</span>
+        Renvoyer le code dans <span class="timer">00:30</span>
     </div>
 
 </div>
@@ -252,7 +252,7 @@ body{
             // ── 4. Timer & resend ──
             const timerSpan = document.querySelector('.timer');
             const resendWrapEl = document.querySelector('.resend-wrap');
-            let totalSeconds = 5 * 60;
+            let totalSeconds = 30;   // ✅ 30 seconds
             let interval = null;
 
             function formatTime(sec) {
@@ -271,7 +271,7 @@ body{
                     interval = null;
                     resendWrapEl.onclick = function(e) {
                         e.preventDefault();
-                        startTimer(5 * 60);
+                        startTimer(30);   // ✅ reset to 30 seconds
                         hideMessage();
                     };
                     return;
@@ -301,7 +301,7 @@ body{
                 }, 1000);
             }
 
-            startTimer(5 * 60);
+            startTimer(30);   // ✅ start with 30 seconds
 
             // ── 5. Check required data ──
             function hasRequiredData() {
